@@ -28,12 +28,12 @@ const ChartScreen = () => {
         // Criar estrutura de dados combinada
         const mergedData = Object.keys(pibSeries)
           .map(year => {
-            const pibTotalBRL = parseFloat(pibSeries[year]) * 1000; // Converter para Reais
-            const populacao = parseFloat(populacaoSeries[year] || populacaoSeries[+year+1]); // Usar próximo ano se necessário
+            const pibTotalBRL = parseFloat(pibSeries[year]) * 1000; // Em milhões de BRL
+            const populacao = parseFloat(populacaoSeries[year] || populacaoSeries[+year+1]); // População estimada
             
             return {
               year,
-              pibTotal: (pibTotalBRL / exchangeRate) / 1e9, // Em bilhões de USD
+              pibTotal: (pibTotalBRL / exchangeRate) / 1e8, // Em bilhões USD
               pibPerCapita: (pibTotalBRL / populacao) / exchangeRate // Em USD
             };
           })
