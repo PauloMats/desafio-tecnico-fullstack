@@ -1,7 +1,6 @@
-// components/TableScreen.jsx
 import { useEffect, useState } from 'react';
-import { fetchPIBData } from '../services/ibgeApi';
 import Pagination from './Pagination.jsx';
+import { getExchangeRate } from '../services/currencyApi';
 
 const TableScreen = () => {
   const [data, setData] = useState([]);
@@ -12,23 +11,40 @@ const TableScreen = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [total, perCapita] = await Promise.all([
-          fetchPIBData(98),
-          fetchPIBData(99)
+        const [exchangeRate, pibRes, populacaoRes] = await Promise.all([
+          getExchangeRate(),
+          fetch('https://servicodados.ibge.gov.br/api/v3/agregados/5938/periodos/2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014|2015|2016|2017|2018|2019|2020|2021/variaveis/37?localidades=N1[all]'),
+          fetch('https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/2001|2002|2003|2004|2005|2006|2008|2009|2011|2012|2013|2014|2015|2016|2017|2018|2019|2020|2021|2024/variaveis/9324?localidades=N1[all]')
         ]);
-        
-        const mergedData = total.map((item, index) => ({
-          year: item.year,
-          pibTotal: item.value,
-          pibPerCapita: perCapita[index].value
-        })).sort((a, b) => a.year - b.year);
-        
+
+        const pibData = await pibRes.json();
+        const populacaoData = await populacaoRes.json();
+
+        const pibSeries = pibData[0].resultados[0].series[0].serie;
+        const populacaoSeries = populacaoData[0].resultados[0].series[0].serie;
+
+        const mergedData = Object.keys(pibSeries)
+          .map(year => {
+            const pibTotalBRL = parseFloat(pibSeries[year]) * 1000;
+            const populacao = parseFloat(populacaoSeries[year] || populacaoSeries[+year+1]);
+            
+            return {
+              year,
+              pibTotal: (pibTotalBRL / exchangeRate),
+              pibPerCapita: (pibTotalBRL / populacao) / exchangeRate
+            };
+          })
+          .filter(item => !isNaN(item.pibPerCapita))
+          .sort((a, b) => a.year - b.year);
+
         setData(mergedData);
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -36,12 +52,17 @@ const TableScreen = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
 
-  const formatCurrency = (value) => 
-    new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
+  const formatCurrency = (value, isPerCapita = false) => {
+    const options = {
+      style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 0 
-    }).format(value);
+      maximumFractionDigits: isPerCapita ? 0 : 0,
+      notation: 'compact',
+      compactDisplay: 'short'
+    };
+
+    return new Intl.NumberFormat('en-US', options).format(value);
+  };
 
   if (loading) return <div className="loading">Carregando...</div>;
 
@@ -62,7 +83,7 @@ const TableScreen = () => {
               <tr key={item.year}>
                 <td>{item.year}</td>
                 <td>{formatCurrency(item.pibTotal)}</td>
-                <td>{formatCurrency(item.pibPerCapita)}</td>
+                <td>{formatCurrency(item.pibPerCapita, true)}</td>
               </tr>
             ))}
           </tbody>
