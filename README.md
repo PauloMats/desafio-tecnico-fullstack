@@ -3,6 +3,7 @@
 Aplicação web para visualização da evolução do Produto Interno Bruto (PIB) do Brasil em dólares americanos (USD), utilizando dados oficiais do IBGE com conversão monetária em tempo real.
 
 # Demonstração em Vídeo
+https://github.com/user-attachments/assets/3044bc81-b4f6-4046-8133-7103c8e2715d
 <video controls src="public/Vídeo demonstrativo IBGE PIB.mp4" title="Video Demonstrativo"></video>
 
 # 🛠 Tecnologias Utilizadas
