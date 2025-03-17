@@ -96,8 +96,8 @@ Limite: 100 requisições/dia (free tier)
 
 1. Clone o repositório
 ```bash
-git clone https://github.com/seu-usuario/pib-analysis.git
-cd pib-analysis
+git clone URL_DO_REPOSITÓRIO
+cd NOME_DO_REPOSITÓRIO
 ```
 
 # Instale as dependências
